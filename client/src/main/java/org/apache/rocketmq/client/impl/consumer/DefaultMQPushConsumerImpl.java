@@ -209,7 +209,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
     public void setOffsetStore(OffsetStore offsetStore) {
         this.offsetStore = offsetStore;
     }
-
+    //拉取消息
     public void pullMessage(final PullRequest pullRequest) {
         final ProcessQueue processQueue = pullRequest.getProcessQueue();
         if (processQueue.isDropped()) {
@@ -458,7 +458,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
                 null);
         }
     }
-
+    //暂停拉取消息
     private void executePullRequestLater(final PullRequest pullRequest, final long timeDelay) {
         this.mQClientFactory.getPullMessageService().executePullRequestLater(pullRequest, timeDelay);
     }
@@ -474,7 +474,7 @@ public class DefaultMQPushConsumerImpl implements MQConsumerInner {
     public ConsumerStatsManager getConsumerStatsManager() {
         return this.mQClientFactory.getConsumerStatsManager();
     }
-
+    //添加拉取请求
     public void executePullRequestImmediately(final PullRequest pullRequest) {
         this.mQClientFactory.getPullMessageService().executePullRequestImmediately(pullRequest);
     }

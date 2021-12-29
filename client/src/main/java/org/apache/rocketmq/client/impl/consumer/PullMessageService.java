@@ -42,7 +42,7 @@ public class PullMessageService extends ServiceThread {
     public PullMessageService(MQClientInstance mQClientFactory) {
         this.mQClientFactory = mQClientFactory;
     }
-
+    //暂停延时一定时间在拉取消息
     public void executePullRequestLater(final PullRequest pullRequest, final long timeDelay) {
         if (!isStopped()) {
             this.scheduledExecutorService.schedule(new Runnable() {
@@ -55,7 +55,7 @@ public class PullMessageService extends ServiceThread {
             log.warn("PullMessageServiceScheduledThread has shutdown");
         }
     }
-
+    //把拉取消息的请求放到请求队列中
     public void executePullRequestImmediately(final PullRequest pullRequest) {
         try {
             this.pullRequestQueue.put(pullRequest);

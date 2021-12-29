@@ -363,7 +363,10 @@ public abstract class RebalanceImpl {
                 }
             }
         }
-
+       //所有队列的集合，这里一个mq队列对应一个本地队列
+        //消息堆积OOM的原因 因为一个队列对应一个本地队列，那么默认会有16个队列.负载到多个服务器也会有好几个。
+        //假设每个服务器分配4个队列，那么1个队列拉取32条消息。假设一条消息1000数据 一个消息会有32000的数据。4个队列会有12万多的数据保底
+        //假设这个时候有些消息已经去消费。队列中的消息的空间流出来但是又没有全部流出来。刚好够100M的阈值。那么会再拉取更多的数据
         List<PullRequest> pullRequestList = new ArrayList<PullRequest>();
         for (MessageQueue mq : mqSet) {
             if (!this.processQueueTable.containsKey(mq)) {
@@ -393,6 +396,7 @@ public abstract class RebalanceImpl {
                         pullRequest.setConsumerGroup(consumerGroup);
                         pullRequest.setNextOffset(nextOffset);
                         pullRequest.setMessageQueue(mq);
+                        //本地队列
                         pullRequest.setProcessQueue(pq);
                         pullRequestList.add(pullRequest);
                         changed = true;
@@ -402,7 +406,7 @@ public abstract class RebalanceImpl {
                 }
             }
         }
-
+        //分发所有的请求
         this.dispatchPullRequest(pullRequestList);
 
         return changed;
