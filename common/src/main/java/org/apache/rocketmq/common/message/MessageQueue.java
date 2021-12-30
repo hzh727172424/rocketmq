@@ -17,7 +17,11 @@
 package org.apache.rocketmq.common.message;
 
 import java.io.Serializable;
-
+/**
+ * @Author: hzh
+ * @Date: 2021/12/30 16:43
+ * MessageQueue是消息队列名字的封装
+ */
 public class MessageQueue implements Comparable<MessageQueue>, Serializable {
     private static final long serialVersionUID = 6191200464116433425L;
     private String topic;

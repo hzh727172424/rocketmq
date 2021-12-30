@@ -163,8 +163,10 @@ public class MQClientInstance {
         if (route.getOrderTopicConf() != null && route.getOrderTopicConf().length() > 0) {
             String[] brokers = route.getOrderTopicConf().split(";");
             for (String broker : brokers) {
+                //broker下的多个队列
                 String[] item = broker.split(":");
                 int nums = Integer.parseInt(item[1]);
+                //添加所有的brtoker下的消息队列到TopicPublishInfo下的消息队列
                 for (int i = 0; i < nums; i++) {
                     MessageQueue mq = new MessageQueue(topic, item[0], i);
                     info.getMessageQueueList().add(mq);
@@ -619,9 +621,11 @@ public class MQClientInstance {
                             }
                         }
                     } else {
+                        //包含topic的broker和queue的信息
                         topicRouteData = this.mQClientAPIImpl.getTopicRouteInfoFromNameServer(topic, clientConfig.getMqClientApiTimeout());
                     }
                     if (topicRouteData != null) {
+                        //更新替换新的
                         TopicRouteData old = this.topicRouteTable.get(topic);
                         boolean changed = topicRouteDataIsChange(old, topicRouteData);
                         if (!changed) {

@@ -66,7 +66,7 @@ public class AssignedMessageQueue {
             }
         }
     }
-
+    // ProcessQueue 和 messageQueue一一对应
     public ProcessQueue getProcessQueue(MessageQueue messageQueue) {
         MessageQueueState messageQueueState = assignedMessageQueueState.get(messageQueue);
         if (messageQueueState != null) {

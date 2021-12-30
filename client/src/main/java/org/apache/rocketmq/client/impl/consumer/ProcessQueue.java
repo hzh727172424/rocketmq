@@ -37,6 +37,7 @@ import org.apache.rocketmq.common.protocol.body.ProcessQueueInfo;
 
 /**
  * Queue consumption snapshot
+ * 这是真正的消费队列， 和messagequeue一对一，每次批量拉取的消息默认存入这个队列。最大值1000，最大容量100M   但是突然大量的数据还是会突破这个阈值
  */
 public class ProcessQueue {
     public final static long REBALANCE_LOCK_MAX_LIVE_TIME =
@@ -45,8 +46,17 @@ public class ProcessQueue {
     private final static long PULL_MAX_IDLE_TIME = Long.parseLong(System.getProperty("rocketmq.client.pull.pullMaxIdleTime", "120000"));
     private final InternalLogger log = ClientLogger.getLog();
     private final ReadWriteLock treeMapLock = new ReentrantReadWriteLock();
+    /**
+     * 存放消息用的
+     */
     private final TreeMap<Long, MessageExt> msgTreeMap = new TreeMap<Long, MessageExt>();
+    /**
+     * 消息总数量
+     */
     private final AtomicLong msgCount = new AtomicLong();
+    /**
+     * 整个ProcessQueue处理单元的总消息长度
+     */
     private final AtomicLong msgSize = new AtomicLong();
     private final Lock consumeLock = new ReentrantLock();
     /**
@@ -164,7 +174,7 @@ public class ProcessQueue {
 
         return dispatchToConsume;
     }
-
+    //返回processQueue中处理的一批消息中最大offset和最小offset之间的差距。
     public long getMaxSpan() {
         try {
             this.treeMapLock.readLock().lockInterruptibly();
