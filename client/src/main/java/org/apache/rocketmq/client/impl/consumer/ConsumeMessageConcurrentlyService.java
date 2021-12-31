@@ -227,7 +227,7 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             pq.cleanExpiredMsg(this.defaultMQPushConsumer);
         }
     }
-
+    //看名字是消费结果处理
     public void processConsumeResult(
         final ConsumeConcurrentlyStatus status,
         final ConsumeConcurrentlyContext context,
@@ -284,8 +284,9 @@ public class ConsumeMessageConcurrentlyService implements ConsumeMessageService 
             default:
                 break;
         }
-
+        //删除消息
         long offset = consumeRequest.getProcessQueue().removeMessage(consumeRequest.getMsgs());
+        //更新消息的偏移量
         if (offset >= 0 && !consumeRequest.getProcessQueue().isDropped()) {
             this.defaultMQPushConsumerImpl.getOffsetStore().updateOffset(consumeRequest.getMessageQueue(), offset, true);
         }

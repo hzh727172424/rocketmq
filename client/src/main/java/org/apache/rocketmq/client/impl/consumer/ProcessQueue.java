@@ -191,7 +191,7 @@ public class ProcessQueue {
 
         return 0;
     }
-
+    //消费成功会删除消息，并且增加offset
     public long removeMessage(final List<MessageExt> msgs) {
         long result = -1;
         final long now = System.currentTimeMillis();
