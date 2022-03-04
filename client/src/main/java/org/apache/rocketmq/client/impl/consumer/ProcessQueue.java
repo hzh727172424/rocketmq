@@ -37,7 +37,7 @@ import org.apache.rocketmq.common.protocol.body.ProcessQueueInfo;
 
 /**
  * Queue consumption snapshot
- * 这是真正的消费队列， 和messagequeue一对一，每次批量拉取的消息默认存入这个队列。最大值1000，最大容量100M   但是突然大量的数据还是会突破这个阈值
+ * 这是真正的消费队列， 和messagequeue一对一，每次批量拉取的消息默认存入这个队列。默认最大值1000，最大容量100M   但是突然大量的数据还是会突破这个阈值
  */
 public class ProcessQueue {
     public final static long REBALANCE_LOCK_MAX_LIVE_TIME =

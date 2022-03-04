@@ -54,7 +54,7 @@ import org.apache.rocketmq.remoting.exception.RemotingException;
  * </p>
  *
  * See quickstart/Consumer in the example module for a typical usage.
- * </p>
+ * </p>  参数类
  *
  * <p>
  * <strong>Thread Safety:</strong> After initialization, the instance can be regarded as thread-safe.
