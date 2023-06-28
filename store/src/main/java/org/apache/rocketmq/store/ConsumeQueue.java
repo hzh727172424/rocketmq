@@ -27,7 +27,7 @@ import org.apache.rocketmq.store.config.StorePathConfigHelper;
 
 public class ConsumeQueue {
     private static final InternalLogger log = InternalLoggerFactory.getLogger(LoggerName.STORE_LOGGER_NAME);
-
+//ConsumeQueue 中用来存储消息偏移量的结构大小为 CQ_STORE_UNIT_SIZE，为20个字节
     public static final int CQ_STORE_UNIT_SIZE = 20;
     private static final InternalLogger LOG_ERROR = InternalLoggerFactory.getLogger(LoggerName.STORE_ERROR_LOGGER_NAME);
 
@@ -86,39 +86,46 @@ public class ConsumeQueue {
     }
 
     public void recover() {
+        //获取队列中所有文件
         final List<MappedFile> mappedFiles = this.mappedFileQueue.getMappedFiles();
         if (!mappedFiles.isEmpty()) {
-
+        //从前三个文件开始找。可能是为了预热
             int index = mappedFiles.size() - 3;
             if (index < 0)
                 index = 0;
-
+        //文件的大小 应该是1024MB
             int mappedFileSizeLogics = this.mappedFileSize;
             MappedFile mappedFile = mappedFiles.get(index);
             ByteBuffer byteBuffer = mappedFile.sliceByteBuffer();
             long processOffset = mappedFile.getFileFromOffset();
+            //临时维护读取的文件大小的偏移量
             long mappedFileOffset = 0;
             long maxExtAddr = 1;
             while (true) {
                 for (int i = 0; i < mappedFileSizeLogics; i += CQ_STORE_UNIT_SIZE) {
+                    //每次读取20字节的数据，并且向后移动20字节。consumeQueue数据结构
                     long offset = byteBuffer.getLong();
                     int size = byteBuffer.getInt();
                     long tagsCode = byteBuffer.getLong();
 
+                    //如果读取出来有值。则临时偏移量增加20.   并且真实偏移量和size进行记录
                     if (offset >= 0 && size > 0) {
                         mappedFileOffset = i + CQ_STORE_UNIT_SIZE;
+                        //真实偏移量和size进行追加
                         this.maxPhysicOffset = offset + size;
                         if (isExtAddr(tagsCode)) {
                             maxExtAddr = tagsCode;
                         }
                     } else {
+                        //false说明文件读到一半没数据了，这个文件没写完
                         log.info("recover current consume queue file over,  " + mappedFile.getFileName() + " "
                             + offset + " " + size + " " + tagsCode);
                         break;
                     }
                 }
-
+                //读取的临时偏移量size到了文件的最大size。说明这个文件读完了 否则停止循环
                 if (mappedFileOffset == mappedFileSizeLogics) {
+                    //如果还有下一个文件。设置下一个文件的数据继续读
                     index++;
                     if (index >= mappedFiles.size()) {
 
@@ -133,17 +140,19 @@ public class ConsumeQueue {
                         log.info("recover next consume queue file, " + mappedFile.getFileName());
                     }
                 } else {
+                    //   停止循环打印日志
                     log.info("recover current consume queue queue over " + mappedFile.getFileName() + " "
                         + (processOffset + mappedFileOffset));
                     break;
                 }
             }
-
+            //当前的文件偏移量也就=fileFromOffset+读取到的文件偏移量
             processOffset += mappedFileOffset;
             this.mappedFileQueue.setFlushedWhere(processOffset);
             this.mappedFileQueue.setCommittedWhere(processOffset);
+            //清理脏数据
             this.mappedFileQueue.truncateDirtyFiles(processOffset);
-
+            //需要开启才去执行，非主流程，暂不研究
             if (isExtReadEnable()) {
                 this.consumeQueueExt.recover();
                 log.info("Truncate consume queue extend file by max {}", maxExtAddr);
@@ -228,6 +237,7 @@ public class ConsumeQueue {
         this.maxPhysicOffset = phyOffet;
         long maxExtAddr = 1;
         while (true) {
+            //循环判断是否需要删除最后的文件
             MappedFile mappedFile = this.mappedFileQueue.getLastMappedFile();
             if (mappedFile != null) {
                 ByteBuffer byteBuffer = mappedFile.sliceByteBuffer();
@@ -242,6 +252,7 @@ public class ConsumeQueue {
                     long tagsCode = byteBuffer.getLong();
 
                     if (0 == i) {
+                        //如果偏移量超过了，说明是多余的文件，需要删除
                         if (offset >= phyOffet) {
                             this.mappedFileQueue.deleteLastMappedFile();
                             break;

@@ -912,6 +912,8 @@ $ nohup sh mqbroker -n 192.168.1.1:9876 -c $ROCKETMQ_HOME/conf/2m-2s-sync/broker
   <td height=23 class=xl67 width=87 style='height:17.0pt;width:65pt'>-a</td>
   <td class=xl67 width=87 style='width:65pt'>BrokerName</td>
  </tr>
+ <tr height=23 style='height:17.0pt'>
+ </tr>
  <tr height=39 style='height:29.0pt'>
   <td height=39 class=xl67 width=87 style='height:29.0pt;width:65pt'>-c</td>
   <td class=xl68 width=87 style='width:65pt'>字符集，例如UTF-8</td>
@@ -923,8 +925,6 @@ $ nohup sh mqbroker -n 192.168.1.1:9876 -c $ROCKETMQ_HOME/conf/2m-2s-sync/broker
  <tr height=39 style='height:29.0pt'>
   <td height=39 class=xl67 width=87 style='height:29.0pt;width:65pt'>-b</td>
   <td class=xl68 width=87 style='width:65pt'>开始时间戳，格式参见-h</td>
- </tr>
- <tr height=23 style='height:17.0pt'>
   <td height=23 class=xl67 width=87 style='height:17.0pt;width:65pt'>-e</td>
   <td class=xl68 width=87 style='width:65pt'>结束时间戳</td>
  </tr>

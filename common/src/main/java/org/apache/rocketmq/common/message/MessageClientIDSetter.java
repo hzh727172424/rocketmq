@@ -31,20 +31,34 @@ public class MessageClientIDSetter {
     private static long nextStartTime;
 
     static {
+
+
         byte[] ip;
         try {
+            long x = System.currentTimeMillis();
             ip = UtilAll.getIP();
+            System.out.println("耗时"+(System.currentTimeMillis()-x));
         } catch (Exception e) {
             ip = createFakeIP();
         }
+
+
         LEN = ip.length + 2 + 4 + 4 + 2;
         ByteBuffer tempBuffer = ByteBuffer.allocate(ip.length + 2 + 4);
         tempBuffer.put(ip);
+
         tempBuffer.putShort((short) UtilAll.getPid());
+
         tempBuffer.putInt(MessageClientIDSetter.class.getClassLoader().hashCode());
         FIX_STRING = UtilAll.bytes2string(tempBuffer.array());
         setStartTime(System.currentTimeMillis());
         COUNTER = new AtomicInteger(0);
+
+    }
+
+    public static void main(String[] args) {
+
+        MessageClientIDSetter.setUniqID(new Message());
     }
 
     private synchronized static void setStartTime(long millis) {

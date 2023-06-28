@@ -56,7 +56,7 @@ import org.apache.rocketmq.store.config.BrokerRole;
 import org.apache.rocketmq.store.config.MessageStoreConfig;
 import org.apache.rocketmq.store.config.StorePathConfigHelper;
 import org.apache.rocketmq.store.dledger.DLedgerCommitLog;
-import org.apache.rocketmq.store.ha.HAService;
+import org.apache.rocketmq.store.util.HAService;
 import org.apache.rocketmq.store.index.IndexService;
 import org.apache.rocketmq.store.index.QueryOffsetResult;
 import org.apache.rocketmq.store.schedule.ScheduleMessageService;
@@ -178,23 +178,27 @@ public class DefaultMessageStore implements MessageStore {
         boolean result = true;
 
         try {
+            //判断临时文件是否存在，如果存在则说明系统是异常宕机  lastExitOK=false
+            // 这个临时文件启动的时候会创建createTempFile  销毁的时候会删除。如果没有正常关闭就不会执行shutdown方法。则认为是异常关闭
             boolean lastExitOK = !this.isTempFileExist();
             log.info("last shutdown {}", lastExitOK ? "normally" : "abnormally");
 
             if (null != scheduleMessageService) {
                 result = result && this.scheduleMessageService.load();
             }
-
-            // load Commit Log
+            //这个是延时队列的操作 ，不看
+            // load Commit Log   //把所有的日志文件加载到文件内存队列中
             result = result && this.commitLog.load();
 
-            // load Consume Queue
+            // load Consume Queue   //把所有的队列文件加载到文件内存队列中
             result = result && this.loadConsumeQueue();
 
             if (result) {
+                //暂时不管
                 this.storeCheckpoint =
                     new StoreCheckpoint(StorePathConfigHelper.getStoreCheckpoint(this.messageStoreConfig.getStorePathRootDir()));
 
+                //索引文件 根据key查找消息。暂时不管
                 this.indexService.load(lastExitOK);
 
                 this.recover(lastExitOK);
@@ -258,6 +262,7 @@ public class DefaultMessageStore implements MessageStore {
             log.info("[SetReputOffset] maxPhysicalPosInLogicQueue={} clMinOffset={} clMaxOffset={} clConfirmedOffset={}",
                 maxPhysicalPosInLogicQueue, this.commitLog.getMinOffset(), this.commitLog.getMaxOffset(), this.commitLog.getConfirmOffset());
             this.reputMessageService.setReputFromOffset(maxPhysicalPosInLogicQueue);
+           //  轮询将CommitLog文件分发到consumequeue和index的核心线程就是ReputMessageService。 即把数据同步给索引文件的核心线程
             this.reputMessageService.start();
 
             /**
@@ -273,13 +278,14 @@ public class DefaultMessageStore implements MessageStore {
             }
             this.recoverTopicQueueTable();
         }
-
+        //开启一致性commitlog的方法 默认关闭
         if (!messageStoreConfig.isEnableDLegerCommitLog()) {
             this.haService.start();
             this.handleScheduleMessageService(messageStoreConfig.getBrokerRole());
         }
 
         this.flushConsumeQueueService.start();
+        //核心文件
         this.commitLog.start();
         this.storeStatsService.start();
 
@@ -1352,6 +1358,7 @@ public class DefaultMessageStore implements MessageStore {
         return file.exists();
     }
 
+    //也是把所有的消息队列文件加到内存队列list中
     private boolean loadConsumeQueue() {
         File dirLogic = new File(StorePathConfigHelper.getStorePathConsumeQueue(this.messageStoreConfig.getStorePathRootDir()));
         File[] fileTopicList = dirLogic.listFiles();
@@ -1390,11 +1397,14 @@ public class DefaultMessageStore implements MessageStore {
     }
 
     private void recover(final boolean lastExitOK) {
+        //队列是commitLog的索引文件  返回值是所有consumeQueue文件的最大偏移量
         long maxPhyOffsetOfConsumeQueue = this.recoverConsumeQueue();
-
+        //commitlog存储的是真实消息   恢复commitLog  是rocketmq的核心消息存储数据。核心流程和功能点
         if (lastExitOK) {
+            // 没有临时文件，是正常退出
             this.commitLog.recoverNormally(maxPhyOffsetOfConsumeQueue);
         } else {
+            //异常关机退出
             this.commitLog.recoverAbnormally(maxPhyOffsetOfConsumeQueue);
         }
 
@@ -1424,13 +1434,14 @@ public class DefaultMessageStore implements MessageStore {
         long maxPhysicOffset = -1;
         for (ConcurrentMap<Integer, ConsumeQueue> maps : this.consumeQueueTable.values()) {
             for (ConsumeQueue logic : maps.values()) {
+                //调用恢复方法 获取这个队列中所有的文件mappedFiles进行恢复
                 logic.recover();
                 if (logic.getMaxPhysicOffset() > maxPhysicOffset) {
                     maxPhysicOffset = logic.getMaxPhysicOffset();
                 }
             }
         }
-
+        //返回所有队列中最大的偏移量
         return maxPhysicOffset;
     }
 

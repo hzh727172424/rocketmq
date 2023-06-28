@@ -41,7 +41,6 @@ import org.apache.rocketmq.logging.InternalLogger;
 import org.apache.rocketmq.logging.InternalLoggerFactory;
 import org.apache.rocketmq.store.config.BrokerRole;
 import org.apache.rocketmq.store.config.FlushDiskType;
-import org.apache.rocketmq.store.ha.HAService;
 import org.apache.rocketmq.store.schedule.ScheduleMessageService;
 
 /**
@@ -1290,9 +1289,11 @@ public class CommitLog {
             CommitLog.log.info(this.getServiceName() + " service started");
 
             while (!this.isStopped()) {
+                //是否固定时间刷盘
                 boolean flushCommitLogTimed = CommitLog.this.defaultMessageStore.getMessageStoreConfig().isFlushCommitLogTimed();
-
+            //刷盘的最长等待时间
                 int interval = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushIntervalCommitLog();
+                //刷盘的页面缓存，达到这个数量才刷盘
                 int flushPhysicQueueLeastPages = CommitLog.this.defaultMessageStore.getMessageStoreConfig().getFlushCommitLogLeastPages();
 
                 int flushPhysicQueueThoroughInterval =

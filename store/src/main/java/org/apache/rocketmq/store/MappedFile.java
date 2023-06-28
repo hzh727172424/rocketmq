@@ -480,7 +480,7 @@ public class MappedFile extends ReferenceResource {
     public void setCommittedPosition(int pos) {
         this.committedPosition.set(pos);
     }
-
+    //文件预热
     public void warmMappedFile(FlushDiskType type, int pages) {
         long beginTime = System.currentTimeMillis();
         ByteBuffer byteBuffer = this.mappedByteBuffer.slice();
@@ -496,7 +496,7 @@ public class MappedFile extends ReferenceResource {
                 }
             }
 
-            // prevent gc
+            // prevent gc  手动进入gc线程停顿点
             if (j % 1000 == 0) {
                 log.info("j={}, costTime={}", j, System.currentTimeMillis() - time);
                 time = System.currentTimeMillis();
@@ -516,7 +516,7 @@ public class MappedFile extends ReferenceResource {
         }
         log.info("mapped file warm-up done. mappedFile={}, costTime={}", this.getFileName(),
             System.currentTimeMillis() - beginTime);
-
+        //禁止swap
         this.mlock();
     }
 
